@@ -9,10 +9,11 @@
         :root { --bg: #0f1012; --sidebar: #17191c; --text: #e3e3e3; --border: #3c4043; --accent: #00f2fe; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         #auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .auth-box { background: var(--sidebar); padding: 40px; border-radius: 20px; border: 1px solid var(--border); text-align: center; max-width: 400px; width: 85%; }
-        .auth-input { padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--border); background: #000; color: white; text-align: center; font-size: 16px; width: 100%; box-sizing: border-box; }
-        .auth-btn { background: linear-gradient(45deg, #4facfe, #00f2fe); color: #000; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .auth-box { background: var(--sidebar); padding: 40px; border-radius: 20px; border: 1px solid var(--border); text-align: center; }
+        .auth-input { padding: 12px; margin: 20px 0; border-radius: 8px; border: 1px solid var(--border); background: #000; color: white; text-align: center; font-size: 18px; }
+        .auth-btn { background: linear-gradient(45deg, #4facfe, #00f2fe); color: #000; border: none; padding: 10px 30px; border-radius: 20px; font-weight: bold; cursor: pointer; }
         .sidebar { width: 260px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; }
+        .new-chat { background: #2d2f31; padding: 10px; border-radius: 20px; text-align: center; cursor: pointer; margin-bottom: 20px; border: 1px solid var(--border); }
         .main { flex: 1; display: flex; flex-direction: column; position: relative; }
         #chat-window { flex: 1; overflow-y: auto; padding: 40px 10%; display: flex; flex-direction: column; gap: 25px; }
         .input-area { padding: 20px 10% 40px; background: linear-gradient(transparent, var(--bg) 50%); }
@@ -28,28 +29,26 @@
     <div id="auth-screen">
         <div class="auth-box">
             <h1 style="color: var(--accent);">Gemini 2.5 Flash</h1>
-            <p style="font-size:12px; color:#8e918f;">パスワードと新しいキーを入力してね</p>
-            <input type="password" id="pass-input" class="auth-input" placeholder="パスワード(yuto2025)">
-            <input type="password" id="key-input" class="auth-input" placeholder="新しいAPIキーを貼り付け">
-            <button onclick="checkAuth()" class="auth-btn">起動する</button>
+            <input type="password" id="pass-input" class="auth-input" placeholder="Password">
+            <br><button onclick="checkPassword()" class="auth-btn">起動する</button>
         </div>
     </div>
 
     <div class="sidebar">
-        <div class="new-chat" style="background:#2d2f31; padding:10px; border-radius:20px; text-align:center; cursor:pointer;" onclick="location.reload()">+ New Session</div>
+        <div class="new-chat" onclick="location.reload()">+ New Session</div>
     </div>
 
     <div class="main">
         <div id="chat-window">
             <div id="welcome" style="text-align:center; margin-top:80px;">
                 <h1 style="font-size:36px; background: linear-gradient(to right, #4facfe, #00f2fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ゆうと さん</h1>
-                <p style="color:#8e918f;">新しいキーで準備完了！</p>
+                <p style="color:#8e918f;">Gemini 2.5 Live 準備完了！</p>
             </div>
         </div>
         <div class="input-area">
             <div class="input-box">
                 <span id="mic-btn" class="material-symbols-rounded icon-btn" onclick="startSpeech()">mic</span>
-                <input type="text" id="userInput" placeholder="2.5 Flashに命令...">
+                <input type="text" id="userInput" placeholder="メッセージを入力...">
                 <span class="material-symbols-rounded icon-btn" onclick="handleSend()">send</span>
             </div>
         </div>
@@ -58,25 +57,20 @@
     <script type="importmap">{ "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }</script>
     <script type="module">
         import { GoogleGenerativeAI } from "@google/generative-ai";
-        let model;
 
-        window.checkAuth = () => {
-            const pass = document.getElementById('pass-input').value;
-            const key = document.getElementById('key-input').value.trim();
-            if (pass === "yuto2025" && key.startsWith("AIza")) {
-                localStorage.setItem('yuto_key_v6', key);
-                initAI(key);
+        // キーを直接入れつつ、前後の空白を自動で消すようにしたよ
+        const KEY_VAL = "AIzaSyAKHvcH0yTVe6W7OOdB8Q_DtwOGWrSAvmU"; 
+        
+        const genAI = new GoogleGenerativeAI(KEY_VAL.trim());
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        window.checkPassword = () => {
+            if (document.getElementById('pass-input').value === "yuto2025") {
                 document.getElementById('auth-screen').style.display = 'none';
-            } else { alert("入力が間違っているよ！"); }
+                sessionStorage.setItem('yuto_session_auth', 'true');
+            }
         };
-
-        const savedKey = localStorage.getItem('yuto_key_v6');
-        if (savedKey) { initAI(savedKey); document.getElementById('auth-screen').style.display = 'none'; }
-
-        function initAI(key) {
-            const genAI = new GoogleGenerativeAI(key);
-            model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        }
+        if (sessionStorage.getItem('yuto_session_auth') === 'true') document.getElementById('auth-screen').style.display = 'none';
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = SpeechRecognition ? new SpeechRecognition() : null;
@@ -98,7 +92,10 @@
                 const aiText = result.response.text();
                 addMessage(aiText, 'ai');
                 speak(aiText);
-            } catch (e) { addMessage("エラー：" + e.message, 'ai'); }
+            } catch (e) {
+                let msg = e.message.includes("429") ? "【制限】今日は20回使い切っちゃったみたい。また明日ね！" : "エラー：" + e.message;
+                addMessage(msg, 'ai');
+            }
         }
 
         function addMessage(t, s) {
@@ -114,7 +111,6 @@
             const u = new SpeechSynthesisUtterance(t); u.lang = 'ja-JP';
             window.speechSynthesis.speak(u);
         }
-        document.getElementById('userInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
     </script>
 </body>
 </html>
