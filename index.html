@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Gemini Private</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        :root {
+            --bg-main: #131314;
+            --bg-sidebar: #1e1f20;
+            --text-main: #e3e3e3;
+            --border: #444746;
+            --active: #2e3b4d;
+        }
+
+        /* パスワード画面のスタイル */
+        #auth-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-main); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .auth-box {
+            background: var(--bg-sidebar); padding: 30px; border-radius: 16px;
+            border: 1px solid var(--border); text-align: center; width: 80%; max-width: 320px;
+        }
+        .auth-input {
+            width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px;
+            border: 1px solid var(--border); background: #131314; color: white; text-align: center; font-size: 18px;
+        }
+        .auth-btn {
+            background: #a8c7fa; color: #062e6f; border: none; padding: 10px 20px;
+            border-radius: 20px; cursor: pointer; font-weight: bold; width: 100%;
+        }
+
+        body { font-family: 'Google Sans', sans-serif; background-color: var(--bg-main); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background-color: var(--bg-sidebar); display: flex; flex-direction: column; padding: 12px; position: fixed; top: 0; left: -280px; height: 100%; z-index: 1000; transition: 0.3s; border-right: 1px solid var(--border); }
+        .sidebar.open { left: 0; }
+        .mobile-header { width: 100%; height: 56px; display: flex; align-items: center; padding: 0 16px; background-color: var(--bg-main); position: fixed; top: 0; z-index: 900; }
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; padding-top: 56px; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px 5% 150px; display: none; flex-direction: column; gap: 24px; }
+        #home-screen { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        .input-area-fixed { position: fixed; bottom: 0; width: 100%; padding: 10px 0 30px; background: linear-gradient(transparent, var(--bg-main) 30%); display: flex; flex-direction: column; align-items: center; }
+        .input-box { width: 90%; max-width: 720px; background-color: #1e1f20; border: 1px solid var(--border); border-radius: 28px; padding: 4px 16px; display: flex; align-items: center; gap: 8px; }
+        input { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; padding: 12px 0; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 950; }
+        .overlay.show { display: block; }
+        .icon-btn { color: #8e918f; cursor: pointer; padding: 10px; }
+        .chat-bubble { max-width: 90%; padding: 12px 16px; border-radius: 20px; font-size: 15px; line-height: 1.5; }
+        .chat-bubble.user { align-self: flex-end; background-color: #37393b; }
+        .chat-bubble.ai { align-self: flex-start; }
+        .chat-media { max-width: 100%; border-radius: 12px; margin-bottom: 8px; }
+        #file-preview { width: 90%; display: none; gap: 10px; padding: 8px; }
+        .preview-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen">
+        <div class="auth-box">
+            <h2 style="margin:0; font-size: 20px;">パスワードを入力</h2>
+            <input type="password" id="pass-input" class="auth-input" placeholder="Password">
+            <button onclick="checkPassword()" class="auth-btn">開く</button>
+            <p id="error-msg" style="color: #f28b82; font-size: 12px; margin-top: 10px; display: none;">パスワードが違うよ！</p>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div style="display:flex; justify-content: space-between; align-items:center;">
+            <div class="sidebar-header">Gemini Private</div>
+            <span class="material-symbols-rounded icon-btn" onclick="toggleSidebar()">close</span>
+        </div>
+        <div style="background: rgba(255,255,255,0.05); padding: 14px; border-radius: 12px; margin: 10px 0; cursor:pointer;" onclick="createNewChat(); toggleSidebar();">
+            + 新しいチャット
+        </div>
+        <div class="history-container" id="historyList"></div>
+    </div>
+
+    <div class="main-content">
+        <div class="mobile-header">
+            <span class="material-symbols-rounded icon-btn" onclick="toggleSidebar()">menu</span>
+            <span style="margin-left: 10px; font-weight: 500;">Gemini Private</span>
+        </div>
+        <div id="home-screen">
+            <h1 style="font-size: 32px; background: linear-gradient(to right, #4285f4, #9b72cb, #d96570); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ゆうと さん</h1>
+            <p style="color: #8e918f;">秘密のチャットへようこそ</p>
+        </div>
+        <div id="chat-window"></div>
+        <div class="input-area-fixed">
+            <div id="file-preview"></div>
+            <div class="input-box">
+                <label for="file-input" class="material-symbols-rounded icon-btn">add_circle</label>
+                <input type="file" id="file-input" style="display:none" accept="image/*,video/*">
+                <input type="text" id="userInput" placeholder="メッセージを入力...">
+                <span class="material-symbols-rounded" style="color:#a8c7fa; padding: 10px;" onclick="handleSend()">send</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+    </script>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+        const API_KEY = "AIzaSyAHDScPEswnKv_tFIlpB9Y_aDIss7R9u8M"; 
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+        const STORAGE_KEY = 'gemini_mobile_v1';
+        let allChats = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        let currentChatId = null;
+        let selectedFileData = null;
+
+        // --- パスワードチェック機能 ---
+        window.checkPassword = () => {
+            const input = document.getElementById('pass-input').value;
+            const correctPass = "yuto2025"; // ★ここを好きなパスワードに変えてね！
+
+            if (input === correctPass) {
+                document.getElementById('auth-screen').style.display = 'none';
+                sessionStorage.setItem('is_authed', 'true');
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        };
+
+        // エンターキーでもパスワード送信できるようにする
+        document.getElementById('pass-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+        // すでに認証済みかチェック
+        if (sessionStorage.getItem('is_authed') === 'true') {
+            document.getElementById('auth-screen').style.display = 'none';
+        }
+
+        // --- 以下、チャット機能 ---
+        window.toggleSidebar = () => {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        };
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                selectedFileData = { base64: ev.target.result.split(',')[1], mimeType: file.type, dataUrl: ev.target.result };
+                const preview = document.getElementById('file-preview');
+                preview.style.display = 'flex';
+                preview.innerHTML = `<img src="${ev.target.result}" class="preview-thumb">`;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        window.handleSend = async function() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text && !selectedFileData) return;
+            if (!currentChatId) {
+                currentChatId = Date.now();
+                allChats.push({ id: currentChatId, title: text || "画像チャット", messages: [] });
+            }
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('chat-window').style.display = 'flex';
+            const tempFile = selectedFileData;
+            addMessage(text, 'user', tempFile?.dataUrl);
+            input.value = '';
+            document.getElementById('file-preview').style.display = 'none';
+            selectedFileData = null;
+            const content = [text || "このファイルを見て"];
+            if (tempFile) content.push({ inlineData: { data: tempFile.base64, mimeType: tempFile.mimeType } });
+            try {
+                const result = await model.generateContent(content);
+                const aiText = result.response.text();
+                addMessage(aiText, 'ai');
+                saveChat(text, aiText, tempFile?.dataUrl);
+            } catch (e) { addMessage("エラーが起きたよ。", 'ai'); }
+        };
+
+        function addMessage(t, s, media = null) {
+            const win = document.getElementById('chat-window');
+            const d = document.createElement('div');
+            d.className = `chat-bubble ${s}`;
+            let html = media ? (media.includes("video") ? `<video src="${media}" class="chat-media" controls></video>` : `<img src="${media}" class="chat-media">`) : "";
+            html += s === 'ai' ? `<strong>Gemini</strong><br>${t.replace(/\n/g, '<br>')}` : t;
+            d.innerHTML = html;
+            win.appendChild(d);
+            win.scrollTo(0, win.scrollHeight);
+        }
+
+        function saveChat(u, a, m) {
+            const chat = allChats.find(c => c.id === currentChatId);
+            chat.messages.push({ user: u, ai: a, media: m });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allChats));
+            renderHistory();
+        }
+
+        window.renderHistory = () => {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            allChats.slice().reverse().forEach(chat => {
+                const item = document.createElement('div');
+                item.style.padding = "12px"; item.style.borderRadius = "8px"; item.style.cursor = "pointer"; item.style.marginBottom = "5px";
+                if(chat.id === currentChatId) item.style.background = "var(--active)";
+                item.innerText = chat.title;
+                item.onclick = () => { loadChat(chat.id); toggleSidebar(); };
+                list.appendChild(item);
+            });
+        };
+
+        function loadChat(id) {
+            currentChatId = id;
+            const chat = allChats.find(c => c.id === id);
+            document.getElementById('home-screen').style.display = 'none';
+            const win = document.getElementById('chat-window');
+            win.innerHTML = ''; win.style.display = 'flex';
+            chat.messages.forEach(m => { addMessage(m.user, 'user', m.media); addMessage(m.ai, 'ai'); });
+            renderHistory();
+        }
+
+        window.createNewChat = () => { currentChatId = null; document.getElementById('home-screen').style.display = 'flex'; document.getElementById('chat-window').style.display = 'none'; renderHistory(); };
+        window.renderHistory();
+        document.getElementById('userInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
+    </script>
+</body>
+</html>
