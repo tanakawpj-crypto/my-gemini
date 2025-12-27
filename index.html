@@ -11,12 +11,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-        /* パスワード画面を一番手前に持ってくる */
-        #auth-screen { 
-            position: fixed; inset: 0; background: var(--bg); 
-            z-index: 10000; /* 数字を大きくして絶対に一番上にする */
-            display: flex; justify-content: center; align-items: center; 
-        }
+        #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; justify-content: center; align-items: center; }
         .auth-box { background: var(--sidebar); padding: 30px; border-radius: 20px; border: 1px solid var(--border); text-align: center; width: 85%; max-width: 350px; }
         .auth-input { padding: 12px; margin: 20px 0; border-radius: 8px; border: 1px solid var(--border); background: #000; color: white; width: 100%; text-align: center; font-size: 18px; outline: none; }
 
@@ -87,6 +82,13 @@
         let currentChatId = Date.now();
         let allChats = JSON.parse(localStorage.getItem('yuto_chats_v3') || '{}');
 
+        // ★iPhone用：声を事前に準備する魔法
+        const prepareVoice = () => {
+            const uttr = new SpeechSynthesisUtterance("");
+            window.speechSynthesis.speak(uttr);
+            console.log("iPhone Voice Prepared");
+        };
+
         if (sessionStorage.getItem('yuto_logged_in') === 'true') {
             document.getElementById('auth-screen').style.display = 'none';
             loadChatList(); createNewChat();
@@ -94,6 +96,7 @@
 
         window.checkPassword = () => {
             if (document.getElementById('pass-input').value === "yuto2025") {
+                prepareVoice(); // ★ここで声を準備！
                 sessionStorage.setItem('yuto_logged_in', 'true');
                 document.getElementById('auth-screen').style.display = 'none';
                 loadChatList(); createNewChat();
@@ -153,11 +156,15 @@
             window.speechSynthesis.cancel();
             const uttr = new SpeechSynthesisUtterance(t);
             const voices = window.speechSynthesis.getVoices();
-            const jpVoice = voices.find(v => v.name.includes('Kyoko') || v.name.includes('Siri') || (v.lang === 'ja-JP' && v.name.includes('Google')));
-            if (jpVoice) uttr.voice = jpVoice;
+            // iPhoneで一番いい声（SiriかKyoko）を探す
+            let selectedVoice = voices.find(v => v.name.includes('Siri') && v.lang === 'ja-JP') || 
+                                voices.find(v => v.name.includes('Kyoko') && v.lang === 'ja-JP') ||
+                                voices.find(v => v.lang === 'ja-JP');
+            
+            if (selectedVoice) uttr.voice = selectedVoice;
             uttr.lang = 'ja-JP';
-            uttr.rate = 1.1;
-            uttr.pitch = 1.1;
+            uttr.rate = 1.0;
+            uttr.pitch = 1.1; // 栞菜ちゃんや愛莉ちゃんっぽく少し高く
             window.speechSynthesis.speak(uttr);
         }
 
@@ -201,8 +208,10 @@
             win.innerHTML = msgs.length ? '' : '<div style="text-align:center;margin-top:40px;opacity:0.5;">ゆうと、何でも話してね！</div>';
             msgs.forEach(m => addMessage(m.text, m.role));
         }
+
         document.getElementById('userInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
         document.getElementById('pass-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkPassword(); });
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     </script>
 </body>
 </html>
