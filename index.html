@@ -10,55 +10,31 @@
         :root { --bg: #0f1012; --sidebar: #17191c; --text: #e3e3e3; --border: #3c4043; --accent: #00f2fe; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-
-        /* パスワード画面 */
-        #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; justify-content: center; align-items: center; }
-        .auth-box { background: var(--sidebar); padding: 30px; border-radius: 20px; border: 1px solid var(--border); text-align: center; width: 85%; max-width: 350px; }
-        .auth-input { padding: 12px; margin: 20px 0; border-radius: 8px; border: 1px solid var(--border); background: #000; color: white; width: 100%; text-align: center; font-size: 18px; outline: none; }
-
-        /* ヘッダー（メニューボタンとカスタム指示をここにまとめる） */
-        .header { 
-            background: var(--bg); border-bottom: 1px solid var(--border); 
-            padding: 10px 15px; display: flex; align-items: center; gap: 15px; 
-            position: sticky; top: 0; z-index: 900; height: 100px;
-        }
+        .header { background: var(--bg); border-bottom: 1px solid var(--border); padding: 10px 15px; display: flex; align-items: center; gap: 15px; position: sticky; top: 0; z-index: 900; }
         .menu-btn { cursor: pointer; color: var(--text); font-size: 32px; flex-shrink: 0; }
         .instruction-container { flex: 1; background: #1e1f21; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border); }
         .instruction-label { font-size: 10px; color: var(--accent); opacity: 0.8; margin-bottom: 2px; }
         #system-instruction { background: transparent; border: none; color: #fff; width: 100%; outline: none; font-size: 14px; }
-
-        /* サイドバー */
-        .sidebar { 
-            position: fixed; left: -280px; top: 0; width: 280px; height: 100%; 
-            background: var(--sidebar); border-right: 1px solid var(--border); 
-            transition: 0.3s; z-index: 999; padding: 20px 10px;
-            display: flex; flex-direction: column;
-        }
+        .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: var(--sidebar); border-right: 1px solid var(--border); transition: 0.3s; z-index: 999; padding: 20px 10px; display: flex; flex-direction: column; }
         .sidebar.open { left: 0; }
         .history-list { flex: 1; overflow-y: auto; margin-top: 15px; }
-        .history-item { 
-            display: flex; align-items: center; padding: 12px; border-radius: 12px; 
-            background: rgba(255,255,255,0.05); margin-bottom: 8px; font-size: 14px;
-        }
+        .history-item { display: flex; align-items: center; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.05); margin-bottom: 8px; font-size: 14px; }
         .history-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
         .del-btn { color: #ff4b4b; font-size: 20px; margin-left: 10px; cursor: pointer; padding: 5px; }
-
-        /* メインチャットエリア */
         .main { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
         #chat-window { flex: 1; overflow-y: auto; padding: 20px 5% 100px; display: flex; flex-direction: column; gap: 20px; }
         .input-area { position: absolute; bottom: 0; width: 100%; padding: 15px; background: linear-gradient(transparent, var(--bg) 40%); }
         .input-box { background: #202124; border: 1px solid var(--border); border-radius: 30px; padding: 5px 15px; display: flex; align-items: center; gap: 10px; }
         input[type="text"] { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; padding: 10px 0; }
-        
         .message { max-width: 90%; padding: 12px 16px; border-radius: 18px; line-height: 1.5; }
         .user { align-self: flex-end; background: #2d2f31; }
         .ai { align-self: flex-start; border: 1px solid var(--border); background: rgba(0, 242, 254, 0.02); }
+        .speak-btn { background: none; border: 1px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 4px 10px; margin-top: 8px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
         #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 998; }
         .new-chat-btn { background: linear-gradient(45deg, #4facfe, #00f2fe); color: #000; padding: 12px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <div id="auth-screen">
         <div class="auth-box">
             <h1 style="color: var(--accent); margin:0;">Gemini 2.5</h1>
@@ -66,24 +42,20 @@
             <button onclick="checkPassword()" style="background:var(--accent); border:none; padding:12px; border-radius:25px; font-weight:bold; cursor:pointer; width:100%;">起動する</button>
         </div>
     </div>
-
     <div id="sidebar" class="sidebar">
         <div class="new-chat-btn" onclick="createNewChat()">+ 新規チャット</div>
         <div class="history-list" id="historyList"></div>
     </div>
     <div id="overlay" onclick="toggleSidebar()"></div>
-
     <div class="main">
         <div class="header">
             <span class="material-symbols-rounded menu-btn" onclick="toggleSidebar()">menu</span>
             <div class="instruction-container">
-                <div class="instruction-label">カスタム指示 (AIへの命令)</div>
-                <input type="text" id="system-instruction" placeholder="例：妹の愛莉として話して..." onchange="updateInstruction()">
+                <div class="instruction-label">カスタム指示</div>
+                <input type="text" id="system-instruction" placeholder="例：栞菜として可愛く話して..." onchange="updateInstruction()">
             </div>
         </div>
-
         <div id="chat-window"></div>
-
         <div class="input-area">
             <div class="input-box">
                 <span class="material-symbols-rounded" style="color:var(--accent); cursor:pointer;" onclick="startSpeech()">mic</span>
@@ -96,11 +68,9 @@
     <script type="importmap">{ "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }</script>
     <script type="module">
         import { GoogleGenerativeAI } from "@google/generative-ai";
-
         const p = ["AIzaSyAKHvcH0yTVe6W", "7OOdB8Q_DtwOGW", "rSAvmU"]; 
         const KEY = p.join('').replace(/\s/g, '');
         const genAI = new GoogleGenerativeAI(KEY);
-
         let currentChatId = Date.now();
         let allChats = JSON.parse(localStorage.getItem('yuto_chats_v3') || '{}');
 
@@ -142,10 +112,8 @@
             const text = input.value.trim();
             const sys = document.getElementById('system-instruction').value;
             if (!text) return;
-
             addMessage(text, 'user');
             input.value = ''; input.blur();
-
             try {
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: sys });
                 const result = await model.generateContent(text);
@@ -159,14 +127,38 @@
             const win = document.getElementById('chat-window');
             const d = document.createElement('div');
             d.className = `message ${s}`;
-            d.innerHTML = s === 'ai' ? `<strong>Gemini</strong><br>${t.replace(/\n/g, '<br>')}` : t;
+            let content = s === 'ai' ? `<strong>Gemini</strong><br>${t.replace(/\n/g, '<br>')}` : t;
+            if (s === 'ai') {
+                content += `<br><button class="speak-btn" onclick="speak(\`${t.replace(/`/g, '\\`').replace(/\n/g, ' ')}\`)"><span class="material-symbols-rounded" style="font-size:16px;">volume_up</span> 読み上げる</button>`;
+            }
+            d.innerHTML = content;
             win.appendChild(d);
             setTimeout(() => win.scrollTo({ top: win.scrollHeight, behavior: 'smooth' }), 100);
         }
 
+        // ★もっと自然な声にするための改良
+        window.speak = (t) => {
+            window.speechSynthesis.cancel();
+            const uttr = new SpeechSynthesisUtterance(t);
+            const voices = window.speechSynthesis.getVoices();
+            
+            // 日本語の高品質な声を探す（iPhoneならKyoko、AndroidならGoogle JP）
+            const jpVoice = voices.find(v => v.name.includes('Kyoko') || v.name.includes('Siri') || (v.lang === 'ja-JP' && v.name.includes('Google')));
+            
+            if (jpVoice) uttr.voice = jpVoice;
+            uttr.lang = 'ja-JP';
+            uttr.rate = 1.1; // ほんの少し速くして人間らしく
+            uttr.pitch = 1.1; // ほんの少し高めにして明るい声に
+            
+            window.speechSynthesis.speak(uttr);
+        }
+
+        // ブラウザが音声を準備するのを待つ
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
         function saveChat(userT, aiT, sys) {
             if (!allChats[currentChatId]) allChats[currentChatId] = { title: userT, messages: [], system: sys };
-            allChats[currentChatId].messages.push({ role: 'user', text: userT }, { role: 'ai', text: aiT });
+            allChats[currentChatId].messages.push({ role: 'user', text: userT }, { role: 'ai', text: aiText });
             localStorage.setItem('yuto_chats_v3', JSON.stringify(allChats));
             loadChatList();
         }
@@ -177,10 +169,7 @@
             Object.keys(allChats).reverse().forEach(id => {
                 const item = document.createElement('div');
                 item.className = 'history-item';
-                item.innerHTML = `
-                    <span onclick="openChat(${id})">${allChats[id].title}</span>
-                    <i class="material-symbols-rounded del-btn" onclick="event.stopPropagation(); deleteChat(${id});">delete</i>
-                `;
+                item.innerHTML = `<span onclick="openChat(${id})">${allChats[id].title}</span><i class="material-symbols-rounded del-btn" onclick="event.stopPropagation(); deleteChat(${id});">delete</i>`;
                 list.appendChild(item);
             });
         }
@@ -194,7 +183,7 @@
         };
 
         window.deleteChat = (id) => {
-            if (confirm("このチャットを削除する？")) {
+            if (confirm("削除する？")) {
                 delete allChats[id];
                 localStorage.setItem('yuto_chats_v3', JSON.stringify(allChats));
                 loadChatList();
